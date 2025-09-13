@@ -180,41 +180,19 @@
             </ul>
           </div>
           <div class="col-12 col-lg-6">
-            <form id="contactForm"
-                  action="https://formspree.io/f/mdkljvkw"
-                  method="POST"
-                  class="needs-validation"
-                  novalidate>
-              <input type="text" name="_gotcha" style="display:none"> <!-- honeypot -->
-              <input type="hidden" name="_subject" value="Nowa wiadomość ze strony Jack’s Room">
-
-              <div class="mb-3">
-                <label class="form-label">Imię</label>
-                <input class="form-control bg-black text-light border-secondary" name="name" required>
-                <div class="invalid-feedback">Podaj imię.</div>
-              </div>
-
+            <form id="contactForm" action="https://formspree.io/f/mdkljvkw" method="POST" class="needs-validation" novalidate>
+              <input type="text" name="_gotcha" style="display:none">
               <div class="mb-3">
                 <label class="form-label">Email</label>
                 <input type="email" class="form-control bg-black text-light border-secondary" name="email" required>
                 <div class="invalid-feedback">Podaj poprawny email.</div>
               </div>
-
               <div class="mb-3">
                 <label class="form-label">Wiadomość</label>
                 <textarea class="form-control bg-black text-light border-secondary" name="message" rows="4" required></textarea>
                 <div class="invalid-feedback">Napisz wiadomość.</div>
               </div>
-
-              <!-- (opcjonalnie) hCaptcha z Formspree: -->
-              <div class="h-captcha" data-sitekey="TWÓJ_SITE_KEY"></div>
-
               <button class="btn btn-primary" type="submit">Wyślij</button>
-              <p class="form-text text-opacity-50 mt-2">
-                Wysyłając, akceptujesz przetwarzanie danych wyłącznie do kontaktu zwrotnego.
-              </p>
-
-              <!-- komunikaty po wysyłce -->
               <div id="formAlert" class="alert mt-3 d-none" role="alert"></div>
             </form>
           </div>
@@ -261,58 +239,32 @@
     });
   })();
   </script>
-  <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('contactForm');
-  if (!form) return;
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('contactForm');
+    if (!form) return;
+    const alertBox = document.getElementById('formAlert');
+    const show = (t,m)=>{alertBox.className=`alert alert-${t} mt-3`;alertBox.textContent=m;alertBox.classList.remove('d-none');};
 
-  const alertBox = document.getElementById('formAlert');
-  const showAlert = (type, msg) => {
-    alertBox.className = `alert alert-${type} mt-3`;
-    alertBox.textContent = msg;
-    alertBox.classList.remove('d-none');
-  };
-
-  form.addEventListener('submit', async (e) => {
-    // Walidacja Bootstrap (masz już klasy .needs-validation)
-    if (!form.checkValidity()) {
+    form.addEventListener('submit', async (e) => {
+      if (!form.checkValidity()) { e.preventDefault(); e.stopPropagation(); form.classList.add('was-validated'); return; }
       e.preventDefault();
-      e.stopPropagation();
-      form.classList.add('was-validated');
-      return;
-    }
 
-    e.preventDefault();
-    const btn = form.querySelector('button[type="submit"]') || form.querySelector('button.btn');
-    const original = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = 'Wysyłanie...';
+      const btn = form.querySelector('button[type="submit"]'); const orig = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Wysyłanie...';
 
-    try {
-      const res = await fetch(form.action, {
-        method: 'POST',
-        headers: { 'Accept': 'application/json' },
-        body: new FormData(form)
-      });
-
-      if (res.ok) {
-        form.reset();
-        form.classList.remove('was-validated');
-        showAlert('success', 'Dziękujemy! Wiadomość została wysłana. Odpiszemy tego samego dnia.');
-      } else {
-        const data = await res.json().catch(() => ({}));
-        const msg = (data.errors && data.errors.map(e => e.message).join(', ')) ||
-                    'Coś poszło nie tak. Spróbuj ponownie lub napisz maila bezpośrednio.';
-        showAlert('warning', msg);
-      }
-    } catch {
-      showAlert('danger', 'Błąd sieci. Sprawdź połączenie i spróbuj ponownie.');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = original;
-    }
-  }, false);
-});
+      try {
+        const res = await fetch(form.action, { method:'POST', headers:{'Accept':'application/json'}, body:new FormData(form) });
+        if (res.ok) { form.reset(); form.classList.remove('was-validated'); show('success','Dziękujemy! Wiadomość wysłana.'); }
+        else {
+          const data = await res.json().catch(()=>({}));
+          const msg = data.errors?.map(e=>e.message).join(', ') || 'Coś poszło nie tak. Spróbuj ponownie.';
+          show('warning', msg);
+        }
+      } catch { show('danger','Błąd sieci. Spróbuj ponownie.'); }
+      finally { btn.disabled=false; btn.textContent=orig; }
+    });
+  });
 </script>
 
 </body>
